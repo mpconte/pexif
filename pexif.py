@@ -1114,11 +1114,9 @@ class JpegFile:
             return (float(deg.num) / deg.den) +  \
                 (1/60.0 * float(min.num) / min.den) + \
                 (1/3600.0 * float(sec.num) / sec.den)
-
         if not self.exif.primary.has_key(GPSIFD):
             raise self.NoSection, "File %s doesn't have a GPS section." % \
                 self.filename
-
 
         gps = self.exif.primary.GPS
         lat = convert(gps.GPSLatitude)
@@ -1137,7 +1135,6 @@ class JpegFile:
             alt = float(alt_rational.num) / alt_rational.den
             if alt_ref == 1:
                alt = -alt
-
 
         return lat, lng, alt
 
