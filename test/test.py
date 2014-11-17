@@ -123,7 +123,7 @@ class TestExifFunctions(unittest.TestCase):
             self.assertEqual(attr.Make, "CanonFoo")
             attr["Make"] = "CanonFoo"
             self.assertEqual(attr["Make"], "CanonFoo")
-        
+
     def test_setattr_exist_none(self):
         for test_file, _ in test_data:
             attr = pexif.JpegFile.fromFile(test_file). \
@@ -156,24 +156,26 @@ class TestExifFunctions(unittest.TestCase):
     def test_simple_add_geo(self):
         for test_file, _ in test_data:
             jf = pexif.JpegFile.fromFile(test_file)
-            (lat, lng) = (-37.312312, 45.412321)
-            jf.set_geo(lat, lng)
+            (lat, lng, alt) = (-37.312312, 45.412321, 123.123)
+            jf.set_geo(lat, lng, alt)
             new_file = jf.writeString()
             new = pexif.JpegFile.fromString(new_file)
-            new_lat, new_lng = new.get_geo()
+            new_lat, new_lng, new_alt = new.get_geo()
             self.assertAlmostEqual(lat, new_lat, 6)
             self.assertAlmostEqual(lng, new_lng, 6)
+            self.assertAlmostEqual(alt, new_alt, 6)
 
     def test_simple_add_geo2(self):
         for test_file, _ in test_data:
             jf = pexif.JpegFile.fromFile(test_file)
-            (lat, lng) = (51.522, -1.455)
-            jf.set_geo(lat, lng)
+            (lat, lng, alt) = (51.522, -1.455, -901.2317)
+            jf.set_geo(lat, lng, alt)
             new_file = jf.writeString()
             new = pexif.JpegFile.fromString(new_file)
-            new_lat, new_lng = new.get_geo()
+            new_lat, new_lng, new_alt = new.get_geo()
             self.assertAlmostEqual(lat, new_lat, 6)
             self.assertAlmostEqual(lng, new_lng, 6)
+            self.assertAlmostEqual(alt, new_alt, 6)
 
     def test_simple_add_geo3(self):
         for test_file, _ in test_data:
@@ -182,9 +184,10 @@ class TestExifFunctions(unittest.TestCase):
             jf.set_geo(lat, lng)
             new_file = jf.writeString()
             new = pexif.JpegFile.fromString(new_file)
-            new_lat, new_lng = new.get_geo()
+            new_lat, new_lng, new_alt = new.get_geo()
             self.assertAlmostEqual(lat, new_lat, 6)
             self.assertAlmostEqual(lng, new_lng, 6)
+            self.assertEqual(new_alt, None)
 
     def test_get_geo(self):
         jf = pexif.JpegFile.fromFile(DEFAULT_TESTFILE)
@@ -200,7 +203,7 @@ class TestExifFunctions(unittest.TestCase):
         # exif doesn't exist
         jf = pexif.JpegFile.fromFile(NONEXIST_TESTFILE, mode="ro")
         self.assertRaises(AttributeError, test_get)
-        
+
 
 if __name__ == "__main__":
     unittest.main()

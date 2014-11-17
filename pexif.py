@@ -1108,27 +1108,41 @@ class JpegFile:
     exif = property(_get_exif)
 
     def get_geo(self):
-        """Return a tuple of (latitude, longitude)."""
+        """Return a tuple of (latitude, longitude, altitude)."""
         def convert(x):
             (deg, min, sec) = x
             return (float(deg.num) / deg.den) +  \
                 (1/60.0 * float(min.num) / min.den) + \
                 (1/3600.0 * float(sec.num) / sec.den)
+
         if not self.exif.primary.has_key(GPSIFD):
             raise self.NoSection, "File %s doesn't have a GPS section." % \
                 self.filename
 
+
         gps = self.exif.primary.GPS
         lat = convert(gps.GPSLatitude)
         lng = convert(gps.GPSLongitude)
+
         if gps.GPSLatitudeRef == "S":
             lat = -lat
         if gps.GPSLongitudeRef == "W":
             lng = -lng
 
-        return lat, lng
+        # Don't assume altitude is present, None will be returned if it's not
+        alt = None
+        if(gps.has_key("GPSAltitude")):
+            alt_rational = gps.GPSAltitude[0]
+            alt_ref = unpack('B', gps.GPSAltitudeRef[0])[0]
+            alt = float(alt_rational.num) / alt_rational.den
+            if alt_ref == 1:
+               alt = -alt
+
+
+        return lat, lng, alt
 
     SEC_DEN = 50000000
+    ALT_DEN = 100000
 
     def _parse(val):
         sign = 1
@@ -1145,8 +1159,8 @@ class JpegFile:
 
     _parse = staticmethod(_parse)
 
-    def set_geo(self, lat, lng):
-        """Set the GeoLocation to a given lat and lng"""
+    def set_geo(self, lat, lng, alt=None):
+        """Set the GeoLocation to a given lat, lng and (optional) alt"""
         if self.mode != "rw":
             raise RWError
 
@@ -1168,3 +1182,12 @@ class JpegFile:
         gps.GPSLongitudeRef = ref
         gps.GPSLongitude = [Rational(deg, 1), Rational(min, 1),
                              Rational(sec, JpegFile.SEC_DEN)]
+
+
+        if(alt):
+            ref = '\x00'
+            if(alt < 0):
+                alt = -alt
+                ref = '\x01'
+            gps.GPSAltitudeRef =ref
+            gps.GPSAltitude = [Rational(alt*JpegFile.ALT_DEN, JpegFile.ALT_DEN)]
